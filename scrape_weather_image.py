@@ -25,13 +25,33 @@ def make_template(img):
 def _find_template_in_img(x, xsub):
 	# print(xsub.shape)
 	# assert False
-	z = signal.fftconvolve(x, xsub, mode = 'valid')
-	znorm = signal.fftconvolve(x, np.ones(xsub.shape), mode = 'valid')
-	znorm[znorm == 0] = 1
+	x = x/255.0
+	xsub = xsub/255.0
+	x = 1 - x
+	xsub = 1 - xsub
+	z = signal.correlate(x, xsub, mode = 'valid')
+	znorm = signal.correlate(x, np.ones(xsub.shape), mode = 'valid')
+	# znorm[znorm == 0] = 1
 
 	# print(z)
 	# print(znorm)
+	print(xsub)
+	print('xsub')
+	plt.imshow(xsub)
+	plt.show()
+
+	print('z')
+	plt.imshow(z)
+	plt.show()
+
+	print('znorm')
+	plt.imshow(znorm)
+	plt.show()
+
 	z = z / znorm
+	print('z')
+	plt.imshow(z)
+	plt.show()
 	# print(x.shape)
 	# print(z.shape)
 	# print(c)
@@ -50,7 +70,13 @@ def _find_template_in_img(x, xsub):
 	return int(np.round(row)), int(np.round(col))
 
 
-def make_weather_bw(img, template, debug=False):
+def make_weather_bw(img, template, debug=False, inky=False):
+	if inky:
+		from inky import InkyWHAT
+		inky_display = InkyWHAT("black")
+		inky_display.set_border(inky_display.WHITE)
+		assert inky_display.WIDTH == 400
+		assert inky_display.HEIGHT == 300
 	im = _load_gray(img)
 	t = np.loadtxt(template)
 	row, col = _find_template_in_img(im, t)
@@ -74,7 +100,8 @@ def make_weather_bw(img, template, debug=False):
 			plt.show()
 	patch = np.vstack(patches)
 	patch = patch.astype(np.int)
-	patch[patch < 220] = patch[patch < 220] - 150
+	# patch[patch < 220] = patch[patch < 220] - 150
+	# patch[patch > 220] = 255
 	# print(patch)
 	# patch -= 10
 	patch = np.maximum(patch, 0)
@@ -82,24 +109,35 @@ def make_weather_bw(img, template, debug=False):
 	print('############')
 	print(patch.shape)
 	print('############')
+	plt.imshow(patch)
+	plt.savefig('test.png')
+	plt.close()
 	from PIL import Image, ImageFont, ImageDraw
 	pal_img = Image.new("P", (1, 1))
 	pal_img.putpalette((255, 255, 255, 0, 0, 0) + (0, 0, 0) * 253)
 	screen_size = np.array([400, 300])
+
 	uppx = np.min(screen_size - np.array(patch.shape[:2]))
 	patch_im = Image.fromarray(np.uint8(patch))
-
-	screen_img = patch_im.resize((patch.shape[1]+uppx, patch.shape[0]+uppx))
-	screen_img = screen_img.quantize(palette=pal_img)
+	# TODO fix aspect ratio
+	patch_im = patch_im.resize((patch.shape[1]+uppx, patch.shape[0]+uppx))
+	# patch_im = patch_im.quantize(palette=pal_img)
+	# screen_img
 	# import ipdb; ipdb.set_trace()
 	# a = np.array(patch.shape[:2])
 
 	# resize = np.max(np.array(patch.shape[:2])/np.array([400.,300.]))*np.array([400.,300.])
 	# print(resize)
 
-	# screen_img = Image.new("P", (300, 400))
-	# screen_img.paste(patch_im)
-	screen_img.show()
+	screen_img = Image.new("P", (300, 400))
+	screen_img.paste(patch_im)
+	screen_img = screen_img.convert("RGB").quantize(palette=pal_img)
+	if inky:
+		inky_display.set_image(screen_img)
+		inky_display.show()
+	else:
+		# screen_img.show()
+		screen_img.save("latest.png")
 	# draw = ImageDraw.Draw(screen_img)
 
 	# thresh = threshold_sauvola(patch,k=.1, r=73.6121593217,window_size=11)

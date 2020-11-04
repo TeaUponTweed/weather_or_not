@@ -1,10 +1,11 @@
-import numpy as np
-import fire
-# from scipy import misc
-import imageio
-import matplotlib.pyplot as plt
+from PIL import Image, ImageFont, ImageDraw
 from scipy import signal
 from skimage.filters import threshold_sauvola
+import fire
+import imageio
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 def _load_gray(img):
 	x = imageio.imread(img)[:,:,:3]
@@ -13,93 +14,69 @@ def _load_gray(img):
 
 
 def make_template(img):
-	# x = imageio.imread(img)[:,:,:3]
-	# print(x.shape)
 	x = _load_gray(img)
-	# xsub = x[350:400,475:600]
-	xsub = x[675:720,480:600]
-
+	xsub = x[350:400,475:600]
 	plt.imshow(xsub)
 	plt.show()
 	np.savetxt('template.txt', np.round(xsub).astype(np.int), fmt='%u')
 
 
-def _find_template_in_img(x, xsub):
-	# print(xsub.shape)
-	# assert False
-	print(x.shape)
+def _find_template_in_img(x, xsub, debug=False):
 	m = np.mean(x)
 	x = x - m
 	s = np.std(x)
 	x = x / s
 	xsub = (xsub - m)/s
-	# x = x/255.0
-	# xsub = xsub/255.0
-	# x = 1 - x
-	# xsub = 1 - xsub
 	m = np.mean(xsub)
 	xsub = xsub - m
 	x = x - m
 	z = signal.correlate(x, xsub, mode = 'valid')
 	znorm = signal.correlate(np.abs(x), np.ones(xsub.shape), mode = 'valid')
-	# znorm[znorm == 0] = 1
-	# znorm = 1
-	# print(z)
-	# print(znorm)
-	print(xsub)
-	print('xsub')
-	plt.imshow(xsub)
-	plt.show()
+	znorm[znorm == 0] = 1
+	if debug:
+		print('xsub')
+		plt.imshow(xsub)
+		plt.show()
 
-	print('z')
-	plt.imshow(z)
-	plt.show()
+		print('z')
+		plt.imshow(z)
+		plt.show()
 
-	print('znorm')
-	plt.imshow(znorm)
-	plt.show()
+		print('znorm')
+		plt.imshow(znorm)
+		plt.show()
 
 	z = z / znorm
-	print('z')
-	plt.imshow(z)
-	plt.show()
-	# print(x.shape)
-	# print(z.shape)
-	# print(c)
-	'''
-	X = np.fft.fft2(x)
-	Xsub = np.fft.fft2(xsub, X.shape)
-	z = np.abs(np.fft.ifft2(np.conj(Xsub)*X))
-	# z = np.fft.fftshift(z)
-	'''
-	# ix = np.argmax(z)
-	row, col = np.unravel_index(z.argmax(), z.shape)
-	#np.divmod(ix, x.shape[1])
+	if debug:
+		print('z')
+		plt.imshow(z)
+		plt.show()
 
-	# row -= xsub.shape[0]/2
-	# col -= xsub.shape[1]/2
+	row, col = np.unravel_index(z.argmax(), z.shape)
+
 	return int(np.round(row)), int(np.round(col))
 
 
 def make_weather_bw(img, template, debug=False, inky=False):
+	# load eink display
 	if inky:
 		from inky import InkyWHAT
 		inky_display = InkyWHAT("black")
 		inky_display.set_border(inky_display.WHITE)
 		assert inky_display.WIDTH == 400
 		assert inky_display.HEIGHT == 300
+	# find anchor in image
 	im = _load_gray(img)
 	t = np.loadtxt(template)
-	row, col = _find_template_in_img(im, t)
+	row, col = _find_template_in_img(im, t, debug=debug)
 	if debug:
 		plt.imshow(im, cmap='gray', vmin=0, vmax=255)
 		plt.plot([col],[row], color='r',marker='x')
 		plt.show()
 
-	im = imageio.imread(img)[:,:,:3]
-	# row, col, h, w
+	# extract patches from image relative to anchor
 	patch_1 = [-170, -295, 190, 225]
-	patch_2 = [180, -290, 110, 225]
+	patch_2 = [180, -277, 110, 225]
 	patches = []
 	for r,c,h,w in [patch_1, patch_2]:
 		y = row + r
@@ -110,54 +87,30 @@ def make_weather_bw(img, template, debug=False, inky=False):
 			plt.imshow(patch)
 			plt.show()
 	patch = np.vstack(patches)
-	patch = patch.astype(np.int)
-	# patch[patch < 220] = patch[patch < 220] - 150
-	# patch[patch > 220] = 255
-	# print(patch)
-	# patch -= 10
+	# darken image so that small text is more clear
+	patch[patch < 220] = patch[patch < 220] - 150
 	patch = np.maximum(patch, 0)
-	print(patch)
-	print('############')
-	print(patch.shape)
-	print('############')
-	plt.imshow(patch)
-	plt.savefig('test.png')
-	plt.close()
-	from PIL import Image, ImageFont, ImageDraw
-	pal_img = Image.new("P", (1, 1))
-	pal_img.putpalette((255, 255, 255, 0, 0, 0) + (0, 0, 0) * 253)
-	screen_size = np.array([400, 300])
-
-	uppx = np.min(screen_size - np.array(patch.shape[:2]))
-	patch_im = Image.fromarray(np.uint8(patch))
-	# TODO fix aspect ratio
-	patch_im = patch_im.resize((patch.shape[1]+uppx, patch.shape[0]+uppx))
-	# patch_im = patch_im.quantize(palette=pal_img)
-	# screen_img
-	# import ipdb; ipdb.set_trace()
-	# a = np.array(patch.shape[:2])
-
-	# resize = np.max(np.array(patch.shape[:2])/np.array([400.,300.]))*np.array([400.,300.])
-	# print(resize)
-
+	# resize image to fill display	
+	aspect_ratio = patch.shape[1]/patch.shape[0]
+	if 400*aspect_ratio <= 300:
+		new_size = (400, min(int(round(400*aspect_ratio)),300))
+	else:
+		new_size = (min(int(round(300/aspect_ratio)),400), 300)
+	new_size = (new_size[1], new_size[0])
+	patch_im = patch_im.resize(new_size)
 	screen_img = Image.new("P", (300, 400))
 	screen_img.paste(patch_im)
+	# convert image to black/white
+	pal_img = Image.new("P", (1, 1))
+	pal_img.putpalette((255, 255, 255, 0, 0, 0) + (0, 0, 0) * 253)
 	screen_img = screen_img.convert("RGB").quantize(palette=pal_img)
+	# display or output image
 	if inky:
 		inky_display.set_image(screen_img)
 		inky_display.show()
 	else:
-		# screen_img.show()
 		screen_img.save("latest.png")
-	# draw = ImageDraw.Draw(screen_img)
 
-	# thresh = threshold_sauvola(patch,k=.1, r=73.6121593217,window_size=11)
-	# print(patch)
-	# patch = patch > thresh
-	# patch = signal.medfilt(patch, 1)
-	# plt.imshow(patch, cmap='gray', vmin=0, vmax=1)
-	# plt.show()
-	# print(X.shape)
 
 if __name__ == '__main__':
 	fire.Fire()

@@ -16,7 +16,9 @@ def make_template(img):
 	# x = imageio.imread(img)[:,:,:3]
 	# print(x.shape)
 	x = _load_gray(img)
-	xsub = x[350:400,475:600]
+	# xsub = x[350:400,475:600]
+	xsub = x[675:720,480:600]
+
 	plt.imshow(xsub)
 	plt.show()
 	np.savetxt('template.txt', np.round(xsub).astype(np.int), fmt='%u')
@@ -25,14 +27,23 @@ def make_template(img):
 def _find_template_in_img(x, xsub):
 	# print(xsub.shape)
 	# assert False
-	x = x/255.0
-	xsub = xsub/255.0
-	x = 1 - x
-	xsub = 1 - xsub
+	print(x.shape)
+	m = np.mean(x)
+	x = x - m
+	s = np.std(x)
+	x = x / s
+	xsub = (xsub - m)/s
+	# x = x/255.0
+	# xsub = xsub/255.0
+	# x = 1 - x
+	# xsub = 1 - xsub
+	m = np.mean(xsub)
+	xsub = xsub - m
+	x = x - m
 	z = signal.correlate(x, xsub, mode = 'valid')
-	znorm = signal.correlate(x, np.ones(xsub.shape), mode = 'valid')
+	znorm = signal.correlate(np.abs(x), np.ones(xsub.shape), mode = 'valid')
 	# znorm[znorm == 0] = 1
-
+	# znorm = 1
 	# print(z)
 	# print(znorm)
 	print(xsub)

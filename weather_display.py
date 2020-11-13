@@ -1,6 +1,6 @@
 from PIL import Image, ImageFont, ImageDraw
-from scipy import signal
-from skimage.filters import threshold_sauvola
+# from scipy import signal
+# from skimage.filters import threshold_sauvola
 import fire
 import imageio
 import matplotlib.pyplot as plt
@@ -30,9 +30,23 @@ def _find_template_in_img(x, xsub, debug=False):
 	m = np.mean(xsub)
 	xsub = xsub - m
 	x = x - m
-	z = signal.correlate(x, xsub, mode = 'valid')
-	znorm = signal.correlate(np.abs(x), np.ones(xsub.shape), mode = 'valid')
-	znorm[znorm == 0] = 1
+	X = np.fft.fft2(x)
+	# print(xsub.shape)
+	xsub = xsub[:int(xsub.shape[0]//2*2),:int(xsub.shape[1]//2*2)]
+	# print(xsub.shape)
+	Xsub = np.fft.fft2(xsub, X.shape)
+	# Xnorm = np.fft.fft2(np.ones(xsub.shape), X.shape)
+	z = np.abs(np.fft.ifft2(np.conj(Xsub)*X))
+	znorm = 1
+	# znorm = np.abs(np.fft.ifft2(np.conj(Xsub)*Xnorm))
+	# znorm[znorm == 0] = 1
+	# z = z/znorm
+	# z = z[int(xsub.shape[0]/2):int(-xsub.shape[0]/2)]
+
+
+	# z = signal.correlate(x, xsub, mode = 'valid')
+	# znorm = signal.correlate(np.abs(x), np.ones(xsub.shape), mode = 'valid')
+	# z = z / znorm
 	if debug:
 		print('xsub')
 		plt.imshow(xsub)
@@ -42,11 +56,10 @@ def _find_template_in_img(x, xsub, debug=False):
 		plt.imshow(z)
 		plt.show()
 
-		print('znorm')
-		plt.imshow(znorm)
-		plt.show()
+		# print('znorm')
+		# plt.imshow(znorm)
+		# plt.show()
 
-	z = z / znorm
 	if debug:
 		print('z')
 		plt.imshow(z)
@@ -97,13 +110,15 @@ def make_weather_bw(img, template, debug=False, inky=False):
 	else:
 		new_size = (min(int(round(300/aspect_ratio)),400), 300)
 	new_size = (new_size[1], new_size[0])
+	patch_im = Image.fromarray(np.uint8(patch))
 	patch_im = patch_im.resize(new_size)
 	screen_img = Image.new("P", (300, 400))
 	screen_img.paste(patch_im)
 	# convert image to black/white
 	pal_img = Image.new("P", (1, 1))
 	pal_img.putpalette((255, 255, 255, 0, 0, 0) + (0, 0, 0) * 253)
-	screen_img = screen_img.convert("RGB").quantize(palette=pal_img)
+	screen_img = screen_img.convert("RGB").quantize(palette=pal_img).transpose(Image.ROTATE_90)
+	# print(screen_img.width)
 	# display or output image
 	if inky:
 		inky_display.set_image(screen_img)

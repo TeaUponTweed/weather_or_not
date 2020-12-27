@@ -120,15 +120,21 @@ def make_weather_bw(img, template, debug=False):
     screen_img.save("latest.png")
 
 def inky_show(im):
+    print('start')
     im = Image.open(im)
+    im = im.transpose(Image.ROTATE_90)
+    assert not np.any(np.isnan(np.array(im))), "Invalid image"
+    print('loaded image')
     from inky import InkyWHAT
     inky_display = InkyWHAT("black")
     inky_display.set_border(inky_display.WHITE)
     assert inky_display.WIDTH == 400
     assert inky_display.HEIGHT == 300
+    print('loaded display')
     # assert inky_display.WIDTH == im.WIDTH
     # assert inky_display.HEIGHT == im.HEIGHT
     inky_display.set_image(im)
+    print('setting display')
     from multiprocessing import Process
     for _ in range(3):
         p1 = Process(target=lambda: inky_display.show(), name='Show Inky')
@@ -136,8 +142,10 @@ def inky_show(im):
         p1.join(timeout=15)
         if p1.exitcode is not None:
             break
+        print('Failed once, trying again')
     else:
         print('Failed to show on inky')
+    print('all done')
 
 
 if __name__ == '__main__':

@@ -89,7 +89,7 @@ def _daily_image(day, dt):
     out.paste(day.weather_image, (0, 10))
     d = ImageDraw.Draw(out)
     # sml_fnt = ImageFont.truetype("/Users/MichaelMason/Downloads/Roboto_Mono/RobotoMono-VariableFont_wght.ttf", 20)
-    sml_fnt = ImageFont.truetype(_abspath("fonts/Roboto-Medium.ttf"), 20)
+    sml_fnt = ImageFont.truetype(_abspath("fonts/Roboto-Thin.ttf"), 20)
     s = f"{day.max_temp_f}°/{day.min_temp_f}°"
     (width, _) = d.multiline_textsize(s, font=sml_fnt)
     d.multiline_text(
@@ -108,9 +108,9 @@ def _daily_image(day, dt):
 def _construct_image(place_name, time_offset, current, three_day):
     out = Image.new("RGBA", (300, 400), (255, 255, 255, 0))
     # load fonts
-    big_fnt = ImageFont.truetype(_abspath("fonts/Roboto-Medium.ttf"), 40)
-    vbig_fnt = ImageFont.truetype(_abspath("fonts/Roboto-Medium.ttf"), 60)
-    sml_fnt = ImageFont.truetype(_abspath("fonts/Roboto-Medium.ttf"), 25)
+    big_fnt = ImageFont.truetype(_abspath("fonts/Roboto-Thin.ttf"), 40)
+    vbig_fnt = ImageFont.truetype(_abspath("fonts/Roboto-Thin.ttf"), 60)
+    sml_fnt = ImageFont.truetype(_abspath("fonts/Roboto-Thin.ttf"), 25)
     # add 150x150 current weather image
     out.paste(current.weather_image.resize((150, 150), Image.LANCZOS), (10, 110))
     # Add current date

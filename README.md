@@ -5,6 +5,7 @@ pip3 install scipy
 pip3 install scikit-image
 pip3 install fire
 pip3 install imageio
+pip3 install geopy
 sudo apt-get install libatlas-base-dev
 curl https://get.pimoroni.com/inky | bash
 ```

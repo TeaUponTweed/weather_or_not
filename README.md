@@ -9,3 +9,5 @@ pip3 install geopy
 sudo apt-get install libatlas-base-dev
 curl https://get.pimoroni.com/inky | bash
 ```
+
+Download fonts from google fonts, e.g. https://fonts.google.com/specimen/Roboto and place them in `./fonts`

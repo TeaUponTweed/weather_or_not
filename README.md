@@ -1,4 +1,7 @@
 # Overview
+A simple always-on weather display designed for use on the (inky what)[shop.pimoroni.com/products/inky-what] and the Raspberry Pi Zero W.
+Makes use of (openweathermap)[https://openweathermap.org/] and (GeoNames)[https://www.geonames.org/] and you'll need a (free) API key from both of those services.
+![Example Black/White Weather Image](https://github.com/Masonofagun/weather_or_not/blob/master/example_screen.png)
 
 # Raspberry Pi Setup
 ## Connecting

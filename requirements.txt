@@ -1,0 +1,6 @@
+fire==0.2.1
+requests==2.24.0
+dataclasses==0.7
+geopy==2.0.0
+numpy==1.18.4
+Pillow==8.1.0

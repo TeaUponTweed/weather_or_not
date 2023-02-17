@@ -61,3 +61,8 @@ Setup a cront tab to update the display every 15 minutes run `crontab -e` and ad
 */15 * * * *  /path/to/repo/update_diplay.sh
 ```
 
+# TODO
+
+- Dockerize scripts
+- Figure out better system for connecting to WiFi (or just use ethernet)
+- Describe steps to battle harden SD cards
